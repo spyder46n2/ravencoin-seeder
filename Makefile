@@ -6,3 +6,14 @@ dnsseed: dns.o ravencoin.o netbase.o protocol.o db.o main.o util.o
 
 %.o: %.cpp *.h
 	g++ -std=c++11 -pthread $(CXXFLAGS) -Wall -Wno-unused -Wno-sign-compare -Wno-reorder -Wno-comment -c -o $@ $<
+
+clean :
+	rm -rf dnsseed
+	rm -rf *.o
+
+cleandata :
+	rm -rf dnsseed
+	rm -rf *.o
+	rm -rf dnsseed.dat
+	rm -rf dnsseed.dump
+	rm -rf dnsstats.log
