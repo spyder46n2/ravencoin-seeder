@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2011 The Bitcoin developers
+// Copyright (C) 2020 The Raven Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,17 +13,19 @@
 
 
 #ifndef WIN32
+
 # include <arpa/inet.h>
+
 #endif
 
-static const char* ppszTypeName[] =
-{
-    "ERROR",
-    "tx",
-    "block",
-};
+static const char *ppszTypeName[] =
+        {
+                "ERROR",
+                "tx",
+                "block",
+        };
 
-unsigned char pchMessageStart[4] = { 0xf9, 0xbe, 0xb4, 0xd9 };
+unsigned char pchMessageStart[4] = {0x52, 0x41, 0x56, 0x4e};  // HEX 4 R A V N
 
 CMessageHeader::CMessageHeader()
 {
@@ -33,7 +36,7 @@ CMessageHeader::CMessageHeader()
     nChecksum = 0;
 }
 
-CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn)
+CMessageHeader::CMessageHeader(const char *pszCommand, unsigned int nMessageSizeIn)
 {
     memcpy(pchMessageStart, ::pchMessageStart, sizeof(pchMessageStart));
     strncpy(pchCommand, pszCommand, COMMAND_SIZE);
@@ -43,7 +46,7 @@ CMessageHeader::CMessageHeader(const char* pszCommand, unsigned int nMessageSize
 
 std::string CMessageHeader::GetCommand() const
 {
-    if (pchCommand[COMMAND_SIZE-1] == 0)
+    if (pchCommand[COMMAND_SIZE - 1] == 0)
         return std::string(pchCommand, pchCommand + strlen(pchCommand));
     else
         return std::string(pchCommand, pchCommand + COMMAND_SIZE);
@@ -56,7 +59,7 @@ bool CMessageHeader::IsValid() const
         return false;
 
     // Check the command string for errors
-    for (const char* p1 = pchCommand; p1 < pchCommand + COMMAND_SIZE; p1++)
+    for (const char *p1 = pchCommand; p1 < pchCommand + COMMAND_SIZE; p1++)
     {
         if (*p1 == 0)
         {
@@ -64,8 +67,7 @@ bool CMessageHeader::IsValid() const
             for (; p1 < pchCommand + COMMAND_SIZE; p1++)
                 if (*p1 != 0)
                     return false;
-        }
-        else if (*p1 < ' ' || *p1 > 0x7E)
+        } else if (*p1 < ' ' || *p1 > 0x7E)
             return false;
     }
 
@@ -78,7 +80,6 @@ bool CMessageHeader::IsValid() const
 
     return true;
 }
-
 
 
 CAddress::CAddress() : CService()
@@ -109,13 +110,13 @@ CInv::CInv()
     hash = 0;
 }
 
-CInv::CInv(int typeIn, const uint256& hashIn)
+CInv::CInv(int typeIn, const uint256 &hashIn)
 {
     type = typeIn;
     hash = hashIn;
 }
 
-CInv::CInv(const std::string& strType, const uint256& hashIn)
+CInv::CInv(const std::string &strType, const uint256 &hashIn)
 {
     int i;
     for (i = 1; i < ARRAYLEN(ppszTypeName); i++)
@@ -131,7 +132,7 @@ CInv::CInv(const std::string& strType, const uint256& hashIn)
     hash = hashIn;
 }
 
-bool operator<(const CInv& a, const CInv& b)
+bool operator<(const CInv &a, const CInv &b)
 {
     return (a.type < b.type || (a.type == b.type && a.hash < b.hash));
 }
@@ -141,7 +142,7 @@ bool CInv::IsKnownType() const
     return (type >= 1 && type < ARRAYLEN(ppszTypeName));
 }
 
-const char* CInv::GetCommand() const
+const char *CInv::GetCommand() const
 {
     if (!IsKnownType())
         throw std::out_of_range("CInv::GetCommand() : unknown type");

@@ -13,8 +13,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef BITCOIN_STRLCPY_H
-#define BITCOIN_STRLCPY_H
+#ifndef RVNCOIN_STRLCPY_H
+#define RVNCOIN_STRLCPY_H
 
 #include <stdlib.h>
 #include <string.h>
@@ -45,11 +45,10 @@ inline size_t strlcpy(char *dst, const char *src, size_t siz)
     {
         if (siz != 0)
             *d = '\0';  /* NUL-terminate dst */
-        while (*s++)
-            ;
+        while (*s++);
     }
 
-    return(s - src - 1); /* count does not include NUL */
+    return (s - src - 1); /* count does not include NUL */
 }
 
 /*
@@ -73,7 +72,7 @@ inline size_t strlcat(char *dst, const char *src, size_t siz)
     n = siz - dlen;
 
     if (n == 0)
-        return(dlen + strlen(s));
+        return (dlen + strlen(s));
     while (*s != '\0')
     {
         if (n != 1)
@@ -85,6 +84,7 @@ inline size_t strlcat(char *dst, const char *src, size_t siz)
     }
     *d = '\0';
 
-    return(dlen + (s - src)); /* count does not include NUL */
+    return (dlen + (s - src)); /* count does not include NUL */
 }
+
 #endif

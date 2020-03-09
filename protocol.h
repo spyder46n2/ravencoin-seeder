@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2011 The Bitcoin developers
+// Copyright (C) 2020 The Raven Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file license.txt or http://www.opensource.org/licenses/mit-license.php.
 
@@ -16,9 +17,10 @@
 #include "uint256.h"
 
 extern bool fTestNet;
+
 static inline unsigned short GetDefaultPort(const bool testnet = fTestNet)
 {
-    return testnet ? 18333 : 8333;
+    return testnet ? 18770 : 8767;
 }
 
 //
@@ -32,29 +34,34 @@ extern unsigned char pchMessageStart[4];
 
 class CMessageHeader
 {
-    public:
-        CMessageHeader();
-        CMessageHeader(const char* pszCommand, unsigned int nMessageSizeIn);
+public:
+    CMessageHeader();
 
-        std::string GetCommand() const;
-        bool IsValid() const;
+    CMessageHeader(const char *pszCommand, unsigned int nMessageSizeIn);
 
-        IMPLEMENT_SERIALIZE
-            (
-             READWRITE(FLATDATA(pchMessageStart));
-             READWRITE(FLATDATA(pchCommand));
-             READWRITE(nMessageSize);
-             if (nVersion >= 209)
-             READWRITE(nChecksum);
-            )
+    std::string GetCommand() const;
+
+    bool IsValid() const;
+
+    IMPLEMENT_SERIALIZE
+    (
+            READWRITE(FLATDATA(pchMessageStart));
+            READWRITE(FLATDATA(pchCommand));
+            READWRITE(nMessageSize);
+            if (nVersion >= 209)
+                READWRITE(nChecksum);
+    )
 
     // TODO: make private (improves encapsulation)
-    public:
-        enum { COMMAND_SIZE=12 };
-        char pchMessageStart[sizeof(::pchMessageStart)];
-        char pchCommand[COMMAND_SIZE];
-        unsigned int nMessageSize;
-        unsigned int nChecksum;
+public:
+    enum
+    {
+        COMMAND_SIZE = 12
+    };
+    char pchMessageStart[sizeof(::pchMessageStart)];
+    char pchCommand[COMMAND_SIZE];
+    unsigned int nMessageSize;
+    unsigned int nChecksum;
 };
 
 enum
@@ -68,60 +75,66 @@ enum
 
 class CAddress : public CService
 {
-    public:
-        CAddress();
-        CAddress(CService ipIn, uint64 nServicesIn=NODE_NETWORK);
+public:
+    CAddress();
 
-        void Init();
+    CAddress(CService ipIn, uint64 nServicesIn = NODE_NETWORK);
 
-        IMPLEMENT_SERIALIZE
-            (
-             CAddress* pthis = const_cast<CAddress*>(this);
-             CService* pip = (CService*)pthis;
-             if (fRead)
-                 pthis->Init();
-             if (nType & SER_DISK)
-             READWRITE(nVersion);
-             if ((nType & SER_DISK) || (nVersion >= 31402 && !(nType & SER_GETHASH)))
-             READWRITE(nTime);
-             READWRITE(nServices);
-             READWRITE(*pip);
-            )
+    void Init();
 
-        void print() const;
+    IMPLEMENT_SERIALIZE
+    (
+            CAddress *pthis = const_cast<CAddress *>(this);
+            CService *pip = (CService *) pthis;
+            if (fRead)
+                pthis->Init();
+            if (nType & SER_DISK)
+                READWRITE(nVersion);
+            if ((nType & SER_DISK) || (nVersion >= 31402 && !(nType & SER_GETHASH)))
+                READWRITE(nTime);
+            READWRITE(nServices);
+            READWRITE(*pip);
+    )
+
+    void print() const;
 
     // TODO: make private (improves encapsulation)
-    public:
-        uint64 nServices;
+public:
+    uint64 nServices;
 
-        // disk and network only
-        unsigned int nTime;
+    // disk and network only
+    unsigned int nTime;
 };
 
 class CInv
 {
-    public:
-        CInv();
-        CInv(int typeIn, const uint256& hashIn);
-        CInv(const std::string& strType, const uint256& hashIn);
+public:
+    CInv();
 
-        IMPLEMENT_SERIALIZE
-        (
+    CInv(int typeIn, const uint256 &hashIn);
+
+    CInv(const std::string &strType, const uint256 &hashIn);
+
+    IMPLEMENT_SERIALIZE
+    (
             READWRITE(type);
             READWRITE(hash);
-        )
+    )
 
-        friend bool operator<(const CInv& a, const CInv& b);
+    friend bool operator<(const CInv &a, const CInv &b);
 
-        bool IsKnownType() const;
-        const char* GetCommand() const;
-        std::string ToString() const;
-        void print() const;
+    bool IsKnownType() const;
+
+    const char *GetCommand() const;
+
+    std::string ToString() const;
+
+    void print() const;
 
     // TODO: make private (improves encapsulation)
-    public:
-        int type;
-        uint256 hash;
+public:
+    int type;
+    uint256 hash;
 };
 
 #endif // __INCLUDED_PROTOCOL_H__

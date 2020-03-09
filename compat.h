@@ -1,9 +1,10 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2012 The Bitcoin developers
+// Copyright (C) 2020 The Raven Core developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef _BITCOIN_COMPAT_H
-#define _BITCOIN_COMPAT_H 1
+#ifndef _RVNCOIN_COMPAT_H
+#define _RVNCOIN_COMPAT_H 1
 
 #ifdef WIN32
 #define _WIN32_WINNT 0x0501
@@ -15,6 +16,7 @@
 #include <mswsock.h>
 #include <ws2tcpip.h>
 #else
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/fcntl.h>
@@ -23,6 +25,7 @@
 #include <net/if.h>
 #include <netinet/in.h>
 #include <ifaddrs.h>
+
 #endif
 
 typedef u_int SOCKET;
@@ -34,7 +37,9 @@ typedef u_int SOCKET;
 #define MSG_DONTWAIT        0
 typedef int socklen_t;
 #else
-#include "errno.h"
+
+#include <cerrno>
+
 #define WSAGetLastError()   errno
 #define WSAEINVAL           EINVAL
 #define WSAEALREADY         EALREADY
@@ -48,7 +53,7 @@ typedef int socklen_t;
 #define SOCKET_ERROR        -1
 #endif
 
-inline int myclosesocket(SOCKET& hSocket)
+inline int myclosesocket(SOCKET &hSocket)
 {
     if (hSocket == INVALID_SOCKET)
         return WSAENOTSOCK;
@@ -60,6 +65,7 @@ inline int myclosesocket(SOCKET& hSocket)
     hSocket = INVALID_SOCKET;
     return ret;
 }
+
 #define closesocket(s)      myclosesocket(s)
 
 
