@@ -18,6 +18,7 @@
 using namespace std;
 
 bool fTestNet = false;
+bool fRegTest = false;
 
 class CDnsSeedOpts
 {
@@ -26,6 +27,7 @@ public:
     int nPort;
     int nDnsThreads;
     int fUseTestNet;
+    int fUseRegTest;
     int fWipeBan;
     int fWipeIgnore;
     const char *mbox;
@@ -37,7 +39,7 @@ public:
     std::set<uint64_t> filter_whitelist;
 
     CDnsSeedOpts()
-            : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fUseTestNet(false), fWipeBan(false), fWipeIgnore(false), ipv4_proxy(NULL), ipv6_proxy(NULL)
+            : nThreads(96), nDnsThreads(4), nPort(53), mbox(NULL), ns(NULL), host(NULL), tor(NULL), fUseTestNet(false), fUseRegTest(false), fWipeBan(false), fWipeIgnore(false), ipv4_proxy(NULL), ipv6_proxy(NULL)
     {}
 
     void ParseCommandLine(int argc, char **argv)
@@ -57,6 +59,7 @@ public:
                                   "-k <ip:port>    IPV6 SOCKS5 proxy IP/Port\n"
                                   "-w f1,f2,...    Allow these flag combinations as filters\n"
                                   "--testnet       Use testnet\n"
+                                  "--regtest       Use regtest\n"
                                   "--wipeban       Wipe list of banned nodes\n"
                                   "--wipeignore    Wipe list of ignored nodes\n"
                                   "-?, --help      Show this text\n"
@@ -77,13 +80,14 @@ public:
                     {"proxyipv6",  required_argument, 0,            'k'},
                     {"filter",     required_argument, 0,            'w'},
                     {"testnet",    no_argument,       &fUseTestNet, 1},
+                    {"regtest",    no_argument,       &fUseRegTest, 1},
                     {"wipeban",    no_argument,       &fWipeBan,    1},
                     {"wipeignore", no_argument,       &fWipeBan,    1},
-                    {"help",       no_argument,       0,            'h'},
+                    {"help",       no_argument,       0,            '?'},
                     {0, 0,                            0,            0}
             };
             int option_index = 0;
-            int c = getopt_long(argc, argv, "h:n:m:t:p:d:o:i:k:w:", long_options, &option_index);
+            int c = getopt_long(argc, argv, "h:n:m:t:p:d:o:i:k:w:?:", long_options, &option_index);
             if (c == -1) break;
             switch (c)
             {
@@ -184,7 +188,10 @@ public:
             filter_whitelist.insert(NODE_NETWORK_LIMITED | NODE_WITNESS | NODE_BLOOM);
         }
         if (host != NULL && ns == NULL) showHelp = true;
-        if (showHelp) fprintf(stderr, help, argv[0]);
+        if (showHelp) {
+            fprintf(stderr, help, argv[0]);
+            exit(0);
+        }
     }
 };
 
@@ -469,11 +476,14 @@ static const string testnet_seeds[] = {"seed-testnet-raven.bitactivate.com",
                                        "seed-testnet-raven.ravencoin.com",
                                        "seed-testnet-raven.ravencoin.org",
                                        ""};
+static const string regtest_seeds[] = {"localhost",
+                                       ""};
+
 static const string *seeds = mainnet_seeds;
 
 extern "C" void *ThreadSeeder(void *)
 {
-    if (!fTestNet)
+    if (!fTestNet && !fRegTest)
     {
         db.Add(CService("kjy2eqzk4zwi5zd3.onion", 8767), true);
     }
@@ -493,59 +503,63 @@ extern "C" void *ThreadSeeder(void *)
     return nullptr;
 }
 
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
     signal(SIGPIPE, SIG_IGN);
     setbuf(stdout, NULL);
     CDnsSeedOpts opts;
     opts.ParseCommandLine(argc, argv);
     printf("Supporting whitelisted filters: ");
-    for (std::set<uint64_t>::const_iterator it = opts.filter_whitelist.begin(); it != opts.filter_whitelist.end(); it++)
-    {
-        if (it != opts.filter_whitelist.begin())
-        {
+    for (std::set<uint64_t>::const_iterator it = opts.filter_whitelist.begin();
+         it != opts.filter_whitelist.end(); it++) {
+        if (it != opts.filter_whitelist.begin()) {
             printf(",");
         }
         printf("0x%lx", (unsigned long) *it);
     }
     printf("\n");
-    if (opts.tor)
-    {
+    if (opts.tor) {
         CService service(opts.tor, 9050);
-        if (service.IsValid())
-        {
+        if (service.IsValid()) {
             printf("Using Tor proxy at %s\n", service.ToStringIPPort().c_str());
             SetProxy(NET_TOR, service);
         }
     }
-    if (opts.ipv4_proxy)
-    {
+    if (opts.ipv4_proxy) {
         CService service(opts.ipv4_proxy, 9050);
-        if (service.IsValid())
-        {
+        if (service.IsValid()) {
             printf("Using IPv4 proxy at %s\n", service.ToStringIPPort().c_str());
             SetProxy(NET_IPV4, service);
         }
     }
-    if (opts.ipv6_proxy)
-    {
+    if (opts.ipv6_proxy) {
         CService service(opts.ipv6_proxy, 9050);
-        if (service.IsValid())
-        {
+        if (service.IsValid()) {
             printf("Using IPv6 proxy at %s\n", service.ToStringIPPort().c_str());
             SetProxy(NET_IPV6, service);
         }
     }
     bool fDNS = true;
-    if (opts.fUseTestNet)
-    {
+    if (opts.fUseTestNet && opts.fUseRegTest) {
+        printf("Specify at most one of testnet and regtest.\n");
+        exit(1);
+    }
+    if (opts.fUseTestNet) {
         printf("Using testnet.\n");
-        pchMessageStart[0] = 0x0b;
-        pchMessageStart[1] = 0x11;
-        pchMessageStart[2] = 0x09;
-        pchMessageStart[3] = 0x07;
+        pchMessageStart[0] = 0x52;
+        pchMessageStart[1] = 0x56;
+        pchMessageStart[2] = 0x4e;
+        pchMessageStart[3] = 0x54;
         seeds = testnet_seeds;
         fTestNet = true;
+    }
+    if (opts.fUseRegTest) {
+        printf("Using regtest.\n");
+        pchMessageStart[0] = 0x43;
+        pchMessageStart[1] = 0x52;
+        pchMessageStart[2] = 0x4f;
+        pchMessageStart[3] = 0x57;
+        seeds = regtest_seeds;
+        fRegTest = true;
     }
     if (!opts.ns)
     {
